@@ -1,0 +1,27 @@
+{
+    "Lua.diagnostics.globals": [
+        "GLOBAL",
+        "env",
+        "TheNet",
+        "STRINGS",
+        "TUNING",
+        "RoundBiasedUp",
+        "GetValidRecipe",
+        "AddClassPostConstruct",
+        "CanPrototypeRecipe",
+        "ValidateRecipeSkinRequest",
+        "AddModRPCHandler",
+        "SendModRPCToClient",
+        "CLIENT_MOD_RPC",
+        "GetString",
+        "AllRecipes",
+        "SetCraftingAutopaused",
+        "Profile",
+        "SendModRPCToServer",
+        "MOD_RPC",
+        "AddClientModRPCHandler",
+        "ThePlayer",
+        "GetStaticTime",
+        "TheFocalPoint"
+    ]
+}

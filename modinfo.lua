@@ -1,17 +1,17 @@
 name = "Craft Helper"
-description =
-	"自动制作合成时需要的中间产品，并统计你缺少的基础材料\nAutomatic production of intermediate products needed for synthesis, and statistics of the basic materials you lack"
+description = "自动从带有小木牌的箱子中获取制作材料"
 author = "Fengying"
-version = "1.0.2"
+version = "2.0.0"
 api_version_dst = 10
+priority = -999999
 
 icon_atlas = "modicon.xml"
 icon = "modicon.tex"
 
 dst_compatible = true
-all_clients_require_mod = false
-client_only_mod = true
+all_clients_require_mod = true
 
+--[[ 
 local keys = {
 	"A",
 	"B",
@@ -91,12 +91,6 @@ keylist[#keylist + 1] = {description = "Disabled", data = false}
 
 configuration_options = {
 	{
-		label = "默认启用这个mod\nEnable on default",
-		name = "is_enable",
-		options = {{description = "Yes", data = true}, {description = "No", data = false}},
-		default = true
-	},
-	{
 		label = "在更新可建造列表时即使用本mod，而不只是建造时（可能导致卡顿）\nUse this mod while updating the buildable list, not just building (which may cause your client stuck)",
 		name = "always_enable",
 		options = {{description = "Yes", data = true}, {description = "No", data = false}},
@@ -109,14 +103,14 @@ configuration_options = {
 		default = "KEY_LCtrl"
 	},
 	{
-		label = "说出你缺少的材料\nTalk if you need new material",
+		label = "无法制作时说出你缺少的材料\nSpeak out if you are short of some materials",
 		name = "talk_mode",
 		options = {
-			{description = "公频喊话 | global talk", data = 1},
-			{description = "私聊喊话 | whisper talk", data = 2},
-			{description = "只有自己能看见 | yourself only", data = 3},
-			{description = "不讲话 | no talk", data = 4}
+			{ description = "官方默认 | ", data = 0 },
+			{ description = "公频喊话 | global talk", data = 1 },
+			{ description = "私聊喊话 | whisper talk", data = 2 },
 		},
-		default = 2
+		default = 0
 	}
 }
+ ]]
