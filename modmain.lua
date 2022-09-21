@@ -7,9 +7,13 @@ GLOBAL.setmetatable(
 	}
 )
 
-local distance = GetModConfigData("distance")
+local distance = GetModConfigData("distance") or 20
 ------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBAL functions
+
+local function pprint(...)
+	print("Craft_Helper", ...)
+end
 
 local minisigh_chest = {}
 local Craft_Helper = {}
@@ -104,31 +108,9 @@ Craft_Helper.MakeIngredient = function(self, recipe)
 	end
 end
 
-AddModRPCHandler(
-	"craft_helper",
-	"has_ingredients",
-	function(inst, knows, name, skin)
-		local recipe = GetValidRecipe(name)
-		if inst.replica.builder:HasIngredients(recipe) then
-			SendModRPCToClient(CLIENT_MOD_RPC["craft_helper"]["do_craft"], inst.userid, knows, recipe.name, skin)
-		else
-			-- check if we can craft sub ingredients
-			local tech_level = inst.replica.builder:GetTechTrees()
-			if Craft_Helper.CanCraftIngredient(inst, recipe, tech_level) then
-				inst.replica.builder:MakeRecipeFromMenu(recipe, skin) -- tell the server to build the current recipe, not the ingredient
-				return
-			end
+------------------------------------------------------------------------------------------------------------------------------------
+-- Hacking
 
-			local str = GetString(inst, "ANNOUNCE_CANNOT_BUILD", "NO_INGREDIENTS", true)
-			if str ~= nil then
-				local talker = inst.components.talker
-				if talker ~= nil then
-					talker:Say(str)
-				end
-			end
-		end
-	end
-)
 if TheNet:GetIsServer() then
 	AddClassPostConstruct(
 		"components/smart_minisign",
@@ -357,6 +339,31 @@ end
 
 ------------------------------------------------------------------------------------------------------------------------------------
 -- RPC
+AddModRPCHandler(
+	"craft_helper",
+	"has_ingredients",
+	function(inst, knows, name, skin)
+		local recipe = GetValidRecipe(name)
+		if inst.replica.builder:HasIngredients(recipe) then
+			SendModRPCToClient(CLIENT_MOD_RPC["craft_helper"]["do_craft"], inst.userid, knows, recipe.name, skin)
+		else
+			-- check if we can craft sub ingredients
+			local tech_level = inst.replica.builder:GetTechTrees()
+			if Craft_Helper.CanCraftIngredient(inst, recipe, tech_level) then
+				inst.replica.builder:MakeRecipeFromMenu(recipe, skin) -- tell the server to build the current recipe, not the ingredient
+				return
+			end
+
+			local str = GetString(inst, "ANNOUNCE_CANNOT_BUILD", "NO_INGREDIENTS", true)
+			if str ~= nil then
+				local talker = inst.components.talker
+				if talker ~= nil then
+					talker:Say(str)
+				end
+			end
+		end
+	end
+)
 
 -- builder need to run on client
 local lastsoundtime = nil

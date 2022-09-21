@@ -2,7 +2,7 @@ name = "Craft Helper"
 description =
 	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
-version = "2.0.1"
+version = "2.0.2"
 api_version_dst = 10
 priority = -999999
 
@@ -92,16 +92,16 @@ keylist[#keylist + 1] = {description = "Disabled", data = false}
  ]]
 configuration_options = {
 	{
-		label = "检测箱子距离()\nDetect chest distance",
+		label = "检测箱子距离\nDetect chest distance",
 		hover = "一块地皮距离为4\nThe distance of a piece of land is 4",
 		name = "distance",
 		options = {
-			{description = "10", data = 10},
-			{description = "16", data = 16},
-			{description = "20", data = 20},
-			{description = "24", data = 24}
+			{description = "10", data = 8},
+			{description = "14", data = 12},
+			{description = "18", data = 16},
+			{description = "22", data = 20}
 		},
-		default = 20
+		default = 14
 	}
 	-- {
 	-- 	label = "在更新可建造列表时即使用本mod，而不只是建造时（可能导致卡顿）\nUse this mod while updating the buildable list, not just building (which may cause your client stuck)",
