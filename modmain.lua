@@ -7,7 +7,7 @@ GLOBAL.setmetatable(
 	}
 )
 
-local distance = GetModConfigData("distance") or 20
+local distance = GetModConfigData("distance") or 14
 ------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBAL functions
 
@@ -112,13 +112,15 @@ end
 -- Hacking
 
 if TheNet:GetIsServer() then
-	AddClassPostConstruct(
-		"components/smart_minisign",
-		function(self)
-			self.inst.components.container.excludefromcrafting = true
-			table.insert(minisigh_chest, self.inst)
-		end
-	)
+	if TUNING.SMART_SIGN_DRAW_ENABLE then
+		AddClassPostConstruct(
+			"components/smart_minisign",
+			function(self)
+				self.inst.components.container.excludefromcrafting = true
+				table.insert(minisigh_chest, self.inst)
+			end
+		)
+	end
 
 	AddClassPostConstruct(
 		"components/builder",

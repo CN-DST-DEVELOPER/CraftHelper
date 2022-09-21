@@ -2,7 +2,7 @@ name = "Craft Helper"
 description =
 	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
-version = "2.0.2"
+version = "2.0.3"
 api_version_dst = 10
 priority = -999999
 
@@ -96,10 +96,10 @@ configuration_options = {
 		hover = "一块地皮距离为4\nThe distance of a piece of land is 4",
 		name = "distance",
 		options = {
-			{description = "10", data = 8},
-			{description = "14", data = 12},
-			{description = "18", data = 16},
-			{description = "22", data = 20}
+			{description = "10", data = 10},
+			{description = "14", data = 14},
+			{description = "18", data = 18},
+			{description = "22", data = 22}
 		},
 		default = 14
 	}
