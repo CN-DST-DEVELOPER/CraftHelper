@@ -1,7 +1,8 @@
 name = "Craft Helper"
-description = "自动从带有小木牌的箱子中获取制作材料"
+description =
+	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
-version = "2.0.0"
+version = "2.0.1"
 api_version_dst = 10
 priority = -999999
 
@@ -88,29 +89,40 @@ for i = 1, #keys do
 	keylist[i] = {description = keys[i], data = "KEY_" .. keys[i]}
 end
 keylist[#keylist + 1] = {description = "Disabled", data = false}
-
+ ]]
 configuration_options = {
 	{
-		label = "在更新可建造列表时即使用本mod，而不只是建造时（可能导致卡顿）\nUse this mod while updating the buildable list, not just building (which may cause your client stuck)",
-		name = "always_enable",
-		options = {{description = "Yes", data = true}, {description = "No", data = false}},
-		default = false
-	},
-	{
-		label = "热键开关\nToggle key",
-		name = "toggle_key",
-		options = keylist,
-		default = "KEY_LCtrl"
-	},
-	{
-		label = "无法制作时说出你缺少的材料\nSpeak out if you are short of some materials",
-		name = "talk_mode",
+		label = "检测箱子距离()\nDetect chest distance",
+		hover = "一块地皮距离为4\nThe distance of a piece of land is 4",
+		name = "distance",
 		options = {
-			{ description = "官方默认 | ", data = 0 },
-			{ description = "公频喊话 | global talk", data = 1 },
-			{ description = "私聊喊话 | whisper talk", data = 2 },
+			{description = "10", data = 10},
+			{description = "16", data = 16},
+			{description = "20", data = 20},
+			{description = "24", data = 24}
 		},
-		default = 0
+		default = 20
 	}
+	-- {
+	-- 	label = "在更新可建造列表时即使用本mod，而不只是建造时（可能导致卡顿）\nUse this mod while updating the buildable list, not just building (which may cause your client stuck)",
+	-- 	name = "always_enable",
+	-- 	options = {{description = "Yes", data = true}, {description = "No", data = false}},
+	-- 	default = false
+	-- },
+	-- {
+	-- 	label = "热键开关\nToggle key",
+	-- 	name = "toggle_key",
+	-- 	options = keylist,
+	-- 	default = "KEY_LCtrl"
+	-- },
+	-- {
+	-- 	label = "无法制作时说出你缺少的材料\nSpeak out if you are short of some materials",
+	-- 	name = "talk_mode",
+	-- 	options = {
+	-- 		{description = "官方默认 | ", data = 0},
+	-- 		{description = "公频喊话 | global talk", data = 1},
+	-- 		{description = "私聊喊话 | whisper talk", data = 2}
+	-- 	},
+	-- 	default = 0
+	-- }
 }
- ]]

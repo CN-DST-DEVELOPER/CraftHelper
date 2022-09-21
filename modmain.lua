@@ -7,15 +7,7 @@ GLOBAL.setmetatable(
 	}
 )
 
-if not TUNING.SMART_SIGN_DRAW_ENABLE then
-	TheNet:SystemMessage("[Craft Helper] Missing required mod id 1595631294")
-	return
-end
-
-local function pprint(...)
-	print("Craft_Helper", ...)
-end
-
+local distance = GetModConfigData("distance")
 ------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBAL functions
 
@@ -146,104 +138,9 @@ if TheNet:GetIsServer() then
 		end
 	)
 
-	local function HasCraftingIngredientFromMinisignChest(item, amount)
-		local total_num_found = 0
-		for i, chest in ipairs(minisigh_chest) do
-			-- local copy = SpawnPrefab(v.prefab)
-			-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
-			-- copy:Remove()
-			if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
-				local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
-				total_num_found = total_num_found + num_found
-				if enough then
-					return true, total_num_found
-				end
-			end
-		end
-		return false, total_num_found
-	end
-
-	local function GetCraftingIngredientFromMinisignChest(item, amount, reverse_search_order)
-		local crafting_items = {}
-		local total_num_found = 0
-		for i, chest in ipairs(minisigh_chest) do
-			if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
-				local container = chest.components.container or chest.components.inventory
-				if container then
-					for k, v in pairs(container:GetCraftingIngredient(item, amount - total_num_found, reverse_search_order)) do
-						crafting_items[k] = v
-						total_num_found = total_num_found + v
-					end
-				end
-				if total_num_found >= amount then
-					break
-				end
-			end
-		end
-		return crafting_items, total_num_found
-	end
-
 	AddClassPostConstruct(
 		"components/builder",
 		function(self)
-			function self:HasIngredients(recipe)
-				if type(recipe) == "string" then
-					recipe = GetValidRecipe(recipe)
-				end
-				if recipe ~= nil then
-					if self.freebuildmode then
-						return true
-					end
-					for i, v in ipairs(recipe.ingredients) do
-						local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
-						local enough, num_found = HasCraftingIngredientFromMinisignChest(v.type, amt)
-						if not enough and not self.inst.components.inventory:Has(v.type, amt - num_found, true) then
-							return false
-						end
-					end
-					for i, v in ipairs(recipe.character_ingredients) do
-						if not self:HasCharacterIngredient(v) then
-							return false
-						end
-					end
-					for i, v in ipairs(recipe.tech_ingredients) do
-						if not self:HasTechIngredient(v) then
-							return false
-						end
-					end
-					return true
-				end
-
-				return false
-			end
-
-			function self:GetIngredients(recname)
-				local recipe = AllRecipes[recname]
-				if recipe then
-					local ingredients = {}
-					local discounted = false
-					for k, v in pairs(recipe.ingredients) do
-						if v.amount > 0 then
-							local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
-							local crafting_items, total_num_found = GetCraftingIngredientFromMinisignChest(v.type, amt, true)
-							if total_num_found < amt then
-								local items = self.inst.components.inventory:GetCraftingIngredient(v.type, amt - total_num_found)
-
-								for k, v in pairs(items) do
-									crafting_items[k] = v
-								end
-							end
-
-							ingredients[v.type] = crafting_items
-							if amt < v.amount then
-								discounted = true
-							end
-						end
-					end
-					return ingredients, discounted
-				end
-			end
-
 			function self:MakeRecipeFromMenu(recipe, skin)
 				if self:HasIngredients(recipe) then
 					if recipe.placer == nil then
@@ -305,6 +202,108 @@ if TheNet:GetIsServer() then
 					end
 				else
 					Craft_Helper.MakeIngredient(self, recipe)
+				end
+			end
+
+			if not TUNING.SMART_SIGN_DRAW_ENABLE then
+				TheNet:SystemMessage("[Craft Helper] Missing required mod <Smart Minisign> id 1595631294")
+				return
+			end
+
+			local function HasCraftingIngredientFromMinisignChest(item, amount)
+				local total_num_found = 0
+				for i, chest in ipairs(minisigh_chest) do
+					if chest:IsNear(self.inst, distance) then
+						-- local copy = SpawnPrefab(v.prefab)
+						-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
+						-- copy:Remove()
+						if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+							local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
+							total_num_found = total_num_found + num_found
+							if enough then
+								return true, total_num_found
+							end
+						end
+					end
+				end
+				return false, total_num_found
+			end
+
+			local function GetCraftingIngredientFromMinisignChest(item, amount, reverse_search_order)
+				local crafting_items = {}
+				local total_num_found = 0
+				for i, chest in ipairs(minisigh_chest) do
+					if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+						local container = chest.components.container or chest.components.inventory
+						if container then
+							for k, v in pairs(container:GetCraftingIngredient(item, amount - total_num_found, reverse_search_order)) do
+								crafting_items[k] = v
+								total_num_found = total_num_found + v
+							end
+						end
+						if total_num_found >= amount then
+							break
+						end
+					end
+				end
+				return crafting_items, total_num_found
+			end
+
+			function self:HasIngredients(recipe)
+				if type(recipe) == "string" then
+					recipe = GetValidRecipe(recipe)
+				end
+				if recipe ~= nil then
+					if self.freebuildmode then
+						return true
+					end
+					for i, v in ipairs(recipe.ingredients) do
+						local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
+						local enough, num_found = HasCraftingIngredientFromMinisignChest(v.type, amt)
+						if not enough and not self.inst.components.inventory:Has(v.type, amt - num_found, true) then
+							return false
+						end
+					end
+					for i, v in ipairs(recipe.character_ingredients) do
+						if not self:HasCharacterIngredient(v) then
+							return false
+						end
+					end
+					for i, v in ipairs(recipe.tech_ingredients) do
+						if not self:HasTechIngredient(v) then
+							return false
+						end
+					end
+					return true
+				end
+
+				return false
+			end
+
+			function self:GetIngredients(recname)
+				local recipe = AllRecipes[recname]
+				if recipe then
+					local ingredients = {}
+					local discounted = false
+					for k, v in pairs(recipe.ingredients) do
+						if v.amount > 0 then
+							local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
+							local crafting_items, total_num_found = GetCraftingIngredientFromMinisignChest(v.type, amt, true)
+							if total_num_found < amt then
+								local items = self.inst.components.inventory:GetCraftingIngredient(v.type, amt - total_num_found)
+
+								for k, v in pairs(items) do
+									crafting_items[k] = v
+								end
+							end
+
+							ingredients[v.type] = crafting_items
+							if amt < v.amount then
+								discounted = true
+							end
+						end
+					end
+					return ingredients, discounted
 				end
 			end
 		end
