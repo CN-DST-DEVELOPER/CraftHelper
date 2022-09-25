@@ -117,7 +117,12 @@ if TheNet:GetIsServer() then
 			"components/smart_minisign",
 			function(self)
 				self.inst.components.container.excludefromcrafting = true
-				table.insert(minisigh_chest, self.inst)
+				self.inst:ListenForEvent(
+					"onremove",
+					function()
+						minisigh_chest[self.inst.GUID] = nil
+					end
+				)
 			end
 		)
 	end
@@ -196,8 +201,8 @@ if TheNet:GetIsServer() then
 
 			local function HasCraftingIngredientFromMinisignChest(item, amount)
 				local total_num_found = 0
-				for i, chest in ipairs(minisigh_chest) do
-					if chest:IsNear(self.inst, distance) then
+				for i, chest in pairs(minisigh_chest) do
+					if chest:IsValid() and chest:IsNear(self.inst, distance) then
 						-- local copy = SpawnPrefab(v.prefab)
 						-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
 						-- copy:Remove()
@@ -216,17 +221,19 @@ if TheNet:GetIsServer() then
 			local function GetCraftingIngredientFromMinisignChest(item, amount, reverse_search_order)
 				local crafting_items = {}
 				local total_num_found = 0
-				for i, chest in ipairs(minisigh_chest) do
-					if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
-						local container = chest.components.container or chest.components.inventory
-						if container then
-							for k, v in pairs(container:GetCraftingIngredient(item, amount - total_num_found, reverse_search_order)) do
-								crafting_items[k] = v
-								total_num_found = total_num_found + v
+				for i, chest in pairs(minisigh_chest) do
+					if chest:IsValid() and chest:IsNear(self.inst, distance) then
+						if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+							local container = chest.components.container or chest.components.inventory
+							if container then
+								for k, v in pairs(container:GetCraftingIngredient(item, amount - total_num_found, reverse_search_order)) do
+									crafting_items[k] = v
+									total_num_found = total_num_found + v
+								end
 							end
-						end
-						if total_num_found >= amount then
-							break
+							if total_num_found >= amount then
+								break
+							end
 						end
 					end
 				end
