@@ -15,7 +15,8 @@
         ".git/",
         ".vscode/",
         ".uploader-config.json",
-        "release/"
+        "release/",
+        "publish.bat"
     ],
     "git_exclude": false,
     "change_note": "",

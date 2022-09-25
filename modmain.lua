@@ -117,6 +117,7 @@ if TheNet:GetIsServer() then
 			"components/smart_minisign",
 			function(self)
 				self.inst.components.container.excludefromcrafting = true
+				minisigh_chest[self.inst.GUID] = self.inst
 				self.inst:ListenForEvent(
 					"onremove",
 					function()
@@ -410,7 +411,7 @@ AddClientModRPCHandler(
 				TheFocalPoint.SoundEmitter:PlaySound("dontstarve/HUD/research_unlock")
 			end
 		end
-		if already_buffered or Profile:GetCraftingMenuBufferedBuildAutoClose() then
+		if recipe.placer and (already_buffered or Profile:GetCraftingMenuBufferedBuildAutoClose()) then
 			ThePlayer.HUD:CloseCrafting()
 		end
 	end
