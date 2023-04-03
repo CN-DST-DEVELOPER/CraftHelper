@@ -12,7 +12,9 @@ icon = "modicon.tex"
 dst_compatible = true
 all_clients_require_mod = true
 
---[[ 
+mod_dependencies = { { workshop = "workshop-1595631294" }, { workshop = "workshop-2097358269" } }
+
+--[[
 local keys = {
 	"A",
 	"B",
