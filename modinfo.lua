@@ -1,6 +1,6 @@
 name = "Craft Helper"
 description =
-	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
+"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
 version = "2.0.5"
 api_version_dst = 10
@@ -98,13 +98,13 @@ configuration_options = {
 		hover = "一块地皮距离为4\nThe distance of a piece of land is 4",
 		name = "distance",
 		options = {
-			{description = "10", data = 10},
-			{description = "14", data = 14},
-			{description = "18", data = 18},
-			{description = "22", data = 22}
+			{ description = "10", data = 10 },
+			{ description = "14", data = 14 },
+			{ description = "18", data = 18 },
+			{ description = "22", data = 22 }
 		},
 		default = 14
-	}
+	},
 	-- {
 	-- 	label = "在更新可建造列表时即使用本mod，而不只是建造时（可能导致卡顿）\nUse this mod while updating the buildable list, not just building (which may cause your client stuck)",
 	-- 	name = "always_enable",
@@ -117,14 +117,14 @@ configuration_options = {
 	-- 	options = keylist,
 	-- 	default = "KEY_LCtrl"
 	-- },
-	-- {
-	-- 	label = "无法制作时说出你缺少的材料\nSpeak out if you are short of some materials",
-	-- 	name = "talk_mode",
-	-- 	options = {
-	-- 		{description = "官方默认 | ", data = 0},
-	-- 		{description = "公频喊话 | global talk", data = 1},
-	-- 		{description = "私聊喊话 | whisper talk", data = 2}
-	-- 	},
-	-- 	default = 0
-	-- }
+	{
+		label = "无法制作时说出你缺少的材料\nSpeak out if you are short of some materials",
+		name = "talk_mode",
+		options = {
+			{ description = "公频喊话 | global talk",       data = 1 },
+			{ description = "私聊喊话 | whisper talk",      data = 2 },
+			{ description = "官方默认 | default as normal", data = 0 }
+		},
+		default = 2
+	},
 }

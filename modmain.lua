@@ -8,6 +8,8 @@ GLOBAL.setmetatable(
 )
 
 local distance = GetModConfigData("distance") or 14
+local talk_mode = GetModConfigData("talk_mode") or 2
+local talk_cd = 3
 ------------------------------------------------------------------------------------------------------------------------------------
 -- GLOBAL functions
 
@@ -15,27 +17,98 @@ local function pprint(...)
 	print("Craft_Helper", ...)
 end
 
+local talk_functions = {
+	[1] = function(str)
+		TheNet:Say(str, false)
+	end,
+	[2] = function(str)
+		TheNet:Say(str, true)
+	end,
+	[0] = function(str)
+		local str = GetString(ThePlayer, "ANNOUNCE_CANNOT_BUILD", "NO_INGREDIENTS", true)
+		if str ~= nil then
+			local talker = ThePlayer.components.talker
+			if talker ~= nil then
+				talker:Say(str)
+			end
+		end
+	end
+}
+
 local minisigh_chest = {}
 local Craft_Helper = {}
 
-Craft_Helper.CanCraftIngredient = function(owner, recipe, tech_level)
-	for i, ing in ipairs(recipe.ingredients) do
-		local ing_recipe = GetValidRecipe(ing.type)
-		if
-			not owner.replica.inventory:Has(
-				ing.type,
-				math.max(1, RoundBiasedUp(ing.amount * owner.replica.builder:IngredientMod())),
-				true
-			) and
-				not (ing_recipe ~= nil and
-					(owner.replica.builder:KnowsRecipe(ing_recipe) or
-						(CanPrototypeRecipe(ing_recipe.level, tech_level) and owner.replica.builder:CanLearn(ing.type))) and
-					(owner.replica.builder:HasIngredients(ing_recipe) or Craft_Helper.CanCraftIngredient(owner, ing_recipe, tech_level)))
-		 then
-			return false
+Craft_Helper.HasCraftingIngredientFromMinisignChest = function(player, item, amount)
+	local total_num_found = 0
+	for i, chest in pairs(minisigh_chest) do
+		if chest:IsValid() and chest:IsNear(player, distance) then
+			-- local copy = SpawnPrefab(v.prefab)
+			-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
+			-- copy:Remove()
+			if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+				local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
+				total_num_found = total_num_found + num_found
+				if enough then
+					return true, total_num_found
+				end
+			end
 		end
 	end
-	return true
+	return false, total_num_found
+end
+
+Craft_Helper.CanCraftIngredient = function(owner, recipe, tech_level, num)
+	num = num or 1
+	local can_craft = true
+	local short_table = setmetatable({}, {
+		__index = function()
+			return 0
+		end
+	})
+	for i, ing in ipairs(recipe.ingredients) do
+		local amt = math.max(1, RoundBiasedUp(ing.amount * owner.components.builder.ingredientmod)) * num
+		local _, num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, ing.type, amt)
+		local _, num_found_inv = owner.components.inventory:Has(ing.type, amt - num_found_chest, true)
+		local short = amt - num_found_chest - num_found_inv
+		if short > 0 then
+			local ing_recipe = GetValidRecipe(ing.type)
+			if
+				ing_recipe ~= nil and
+				(owner.replica.builder:KnowsRecipe(ing_recipe) or
+				(CanPrototypeRecipe(ing_recipe.level, tech_level) and owner.replica.builder:CanLearn(ing.type))) then
+				for i, v in ipairs(ing_recipe.ingredients) do
+					local ing_amt = math.max(1, RoundBiasedUp(v.amount * owner.components.builder.ingredientmod)) * short
+					local _, ing_num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, v.type,
+						ing_amt)
+					local _, ing_num_found_inv = owner.components.inventory:Has(v.type, amt - ing_num_found_chest, true)
+					ing_short = ing_amt - ing_num_found_chest - ing_num_found_inv
+					if ing_short > 0 then
+						local ing_can_craft, ing_short_table = Craft_Helper.CanCraftIngredient(owner, ing_recipe,
+							tech_level,
+							ing_short)
+						can_craft = can_craft and ing_can_craft
+						for key, value in pairs(ing_short_table) do
+							short_table[key] = short_table[key] + value
+						end
+					end
+				end
+				for i, v in ipairs(ing_recipe.character_ingredients) do
+					if not owner.components.builder:HasCharacterIngredient(v) then
+						can_craft = false
+					end
+				end
+				for i, v in ipairs(ing_recipe.tech_ingredients) do
+					if not owner.components.builder:HasTechIngredient(v) then
+						can_craft = false
+					end
+				end
+			else
+				short_table[ing.type] = short
+				can_craft = false
+			end
+		end
+	end
+	return can_craft, short_table
 end
 
 Craft_Helper.MakeIngredient = function(self, recipe)
@@ -43,8 +116,8 @@ Craft_Helper.MakeIngredient = function(self, recipe)
 		local ing_recipe = GetValidRecipe(ing.type)
 		if
 			ing_recipe ~= nil and
-				not self.inst.components.inventory:Has(ing.type, math.max(1, RoundBiasedUp(ing.amount * self.ingredientmod)), true)
-		 then
+			not self.inst.components.inventory:Has(ing.type, math.max(1, RoundBiasedUp(ing.amount * self.ingredientmod)), true)
+		then
 			if self:HasIngredients(ing_recipe) then
 				--Need to determine this NOW before calling async MakeRecipe
 				local knows_no_temp = self:KnowsRecipe(ing_recipe, true)
@@ -67,8 +140,8 @@ Craft_Helper.MakeIngredient = function(self, recipe)
 								--V2C: free-build should still trigger prototyping
 								if
 									not table.contains(self.recipes, ing_recipe.name) and
-										CanPrototypeRecipe(ing_recipe.level, self.accessible_tech_trees)
-								 then
+									CanPrototypeRecipe(ing_recipe.level, self.accessible_tech_trees)
+								then
 									self:ActivateCurrentResearchMachine(ing_recipe)
 								end
 							elseif not knows_no_temp and canproto_no_temp and canlearn then
@@ -131,6 +204,8 @@ if TheNet:GetIsServer() then
 	AddClassPostConstruct(
 		"components/builder",
 		function(self)
+			self.last_craft_helper_talk = 0
+
 			function self:MakeRecipeFromMenu(recipe, skin)
 				if self:HasIngredients(recipe) then
 					if recipe.placer == nil then
@@ -155,8 +230,8 @@ if TheNet:GetIsServer() then
 										--V2C: free-build should still trigger prototyping
 										if
 											not table.contains(self.recipes, recipe.name) and
-												CanPrototypeRecipe(recipe.level, self.accessible_tech_trees)
-										 then
+											CanPrototypeRecipe(recipe.level, self.accessible_tech_trees)
+										then
 											self:ActivateCurrentResearchMachine(recipe)
 										end
 									elseif not knows_no_temp and canproto_no_temp and canlearn then
@@ -200,25 +275,6 @@ if TheNet:GetIsServer() then
 				return
 			end
 
-			local function HasCraftingIngredientFromMinisignChest(item, amount)
-				local total_num_found = 0
-				for i, chest in pairs(minisigh_chest) do
-					if chest:IsValid() and chest:IsNear(self.inst, distance) then
-						-- local copy = SpawnPrefab(v.prefab)
-						-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
-						-- copy:Remove()
-						if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
-							local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
-							total_num_found = total_num_found + num_found
-							if enough then
-								return true, total_num_found
-							end
-						end
-					end
-				end
-				return false, total_num_found
-			end
-
 			local function GetCraftingIngredientFromMinisignChest(item, amount, reverse_search_order)
 				local crafting_items = {}
 				local total_num_found = 0
@@ -251,7 +307,8 @@ if TheNet:GetIsServer() then
 					end
 					for i, v in ipairs(recipe.ingredients) do
 						local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
-						local enough, num_found = HasCraftingIngredientFromMinisignChest(v.type, amt)
+						local enough, num_found = Craft_Helper.HasCraftingIngredientFromMinisignChest(self.inst, v.type,
+							amt)
 						if not enough and not self.inst.components.inventory:Has(v.type, amt - num_found, true) then
 							return false
 						end
@@ -280,9 +337,11 @@ if TheNet:GetIsServer() then
 					for k, v in pairs(recipe.ingredients) do
 						if v.amount > 0 then
 							local amt = math.max(1, RoundBiasedUp(v.amount * self.ingredientmod))
-							local crafting_items, total_num_found = GetCraftingIngredientFromMinisignChest(v.type, amt, true)
+							local crafting_items, total_num_found = GetCraftingIngredientFromMinisignChest(v.type, amt,
+								true)
 							if total_num_found < amt then
-								local items = self.inst.components.inventory:GetCraftingIngredient(v.type, amt - total_num_found)
+								local items = self.inst.components.inventory:GetCraftingIngredient(v.type,
+									amt - total_num_found)
 
 								for k, v in pairs(items) do
 									crafting_items[k] = v
@@ -301,7 +360,7 @@ if TheNet:GetIsServer() then
 		end
 	)
 end
-if TheNet:GetIsClient() then
+if TheNet:GetIsClient() or TheNet:GetServerIsClientHosted() then
 	GLOBAL.DoRecipeClick = function(owner, recipe, skin)
 		if recipe ~= nil and owner ~= nil and owner.replica.builder ~= nil then
 			if skin == recipe.name then
@@ -345,6 +404,17 @@ if TheNet:GetIsClient() then
 			end
 		end
 	end
+
+	AddClassPostConstruct(
+		"widgets/redux/craftingmenu_details",
+		function(self)
+			local UpdateBuildButton_Original = self.UpdateBuildButton
+			self.UpdateBuildButton = function(...)
+				UpdateBuildButton_Original(...)
+				self.build_button_root.button:Enable()
+			end
+		end
+	)
 end
 
 ------------------------------------------------------------------------------------------------------------------------------------
@@ -359,17 +429,20 @@ AddModRPCHandler(
 		else
 			-- check if we can craft sub ingredients
 			local tech_level = inst.replica.builder:GetTechTrees()
-			if Craft_Helper.CanCraftIngredient(inst, recipe, tech_level) then
+			local can_craft, short_table = Craft_Helper.CanCraftIngredient(inst, recipe, tech_level, 1)
+			if can_craft then
 				inst.replica.builder:MakeRecipeFromMenu(recipe, skin) -- tell the server to build the current recipe, not the ingredient
 				return
 			end
 
-			local str = GetString(inst, "ANNOUNCE_CANNOT_BUILD", "NO_INGREDIENTS", true)
-			if str ~= nil then
-				local talker = inst.components.talker
-				if talker ~= nil then
-					talker:Say(str)
+			if GetTime() - inst.components.builder.last_craft_helper_talk > talk_cd then
+				local str = "制作" .. STRINGS.NAMES[string.upper(recipe.product)] .. "还需要"
+				for k, v in pairs(short_table) do
+					str = str .. v .. "个" .. STRINGS.NAMES[string.upper(k)]
 				end
+				-- SendModRPCToClient(CLIENT_MOD_RPC["craft_helper"]["do_craft"], str)
+				talk_functions[talk_mode](str)
+				inst.components.builder.last_craft_helper_talk = GetTime()
 			end
 		end
 	end
@@ -416,3 +489,13 @@ AddClientModRPCHandler(
 		end
 	end
 )
+
+
+
+-- AddClientModRPCHandler(
+-- 	"craft_helper",
+-- 	"talk",
+-- 	function(str)
+-- 		talk_functions[talk_mode](str)
+-- 	end
+-- )
