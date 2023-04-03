@@ -41,7 +41,7 @@ local Craft_Helper = {}
 Craft_Helper.HasCraftingIngredientFromMinisignChest = function(player, item, amount)
 	local total_num_found = 0
 	for i, chest in pairs(minisigh_chest) do
-		if chest:IsValid() and chest:IsNear(player, distance) then
+		if chest:IsValid() and chest:IsNear(player, distance) and not player.components.inventory.opencontainers[chest] then
 			-- local copy = SpawnPrefab(v.prefab)
 			-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
 			-- copy:Remove()
@@ -189,7 +189,7 @@ if TheNet:GetIsServer() then
 		AddClassPostConstruct(
 			"components/smart_minisign",
 			function(self)
-				self.inst.components.container.excludefromcrafting = true
+				-- self.inst.components.container.excludefromcrafting = true
 				minisigh_chest[self.inst.GUID] = self.inst
 				self.inst:ListenForEvent(
 					"onremove",
