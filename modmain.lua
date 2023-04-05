@@ -191,14 +191,15 @@ AddPlayerPostInit(
 		inst.last_craft_helper_talk = 0
 		inst.craft_helper_string = net_string(inst.GUID, "craft_helper.string", "craft_helper_stringdirty")
 		inst.craft_helper_string:set_local("")
-		if not TheNet:GetIsServer() then
+		if not TheNet:IsDedicated() then
 			inst:ListenForEvent(
 				"craft_helper_stringdirty",
 				function(inst)
-					local str2 = inst.craft_helper_string:value()
-					local str = DecodeAndUnzipString(inst.craft_helper_string:value())
-					if str ~= nil then
-						talk_functions[talk_mode](str)
+					if inst == ThePlayer then
+						local str = DecodeAndUnzipString(inst.craft_helper_string:value())
+						if str ~= nil then
+							talk_functions[talk_mode](str)
+						end
 					end
 				end
 			)
@@ -377,7 +378,7 @@ if TheNet:GetIsServer() then
 		end
 	)
 end
-if TheNet:GetIsClient() or TheNet:GetServerIsClientHosted() then
+if not TheNet:IsDedicated() then
 	GLOBAL.DoRecipeClick = function(owner, recipe, skin)
 		if recipe ~= nil and owner ~= nil and owner.replica.builder ~= nil then
 			if skin == recipe.name then
