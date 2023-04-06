@@ -45,7 +45,10 @@ Craft_Helper.HasCraftingIngredientFromMinisignChest = function(player, item, amo
 			-- local copy = SpawnPrefab(v.prefab)
 			-- tname = copy ~= nil and (copy.drawnameoverride or copy:GetBasicDisplayName()) or ""
 			-- copy:Remove()
-			if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+			if
+				chest.components.smart_minisign and chest.components.smart_minisign.sign and
+					chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)]
+			 then
 				local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
 				total_num_found = total_num_found + num_found
 				if enough then
