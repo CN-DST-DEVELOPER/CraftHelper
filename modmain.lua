@@ -88,7 +88,7 @@ Craft_Helper.CanCraftIngredient = function(owner, recipe, tech_level, num)
 					local ing_amt = math.max(1, RoundBiasedUp(v.amount * owner.components.builder.ingredientmod)) * short
 					local _, ing_num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, v.type, ing_amt)
 					local _, ing_num_found_inv = owner.components.inventory:Has(v.type, amt - ing_num_found_chest, true)
-					ing_short = ing_amt - ing_num_found_chest - ing_num_found_inv
+					local ing_short = ing_amt - ing_num_found_chest - ing_num_found_inv
 					if ing_short > 0 then
 						local ing_can_craft, ing_short_table = Craft_Helper.CanCraftIngredient(owner, ing_recipe, tech_level, ing_short)
 						can_craft = can_craft and ing_can_craft
@@ -199,8 +199,21 @@ AddPlayerPostInit(
 				"craft_helper_stringdirty",
 				function(inst)
 					if inst == ThePlayer then
-						local str = DecodeAndUnzipString(inst.craft_helper_string:value())
+						local data = DecodeAndUnzipString(inst.craft_helper_string:value())
+						local a, b = pcall(json.decode, data)
+						if not a then
+							pprint("Failed to decode string", data)
+							return
+						end
+
+						local product_name, short_table = next(b)
+						local str = "制作" .. STRINGS.NAMES[string.upper(product_name)] .. "还需要"
+						for k, v in pairs(short_table) do
+							str = str .. v .. "个" .. STRINGS.NAMES[string.upper(k)]
+						end
+
 						if str ~= nil then
+							-- pprint(talk_mode, str)
 							talk_functions[talk_mode](str)
 						end
 					end
@@ -381,7 +394,9 @@ if TheNet:GetIsServer() then
 		end
 	)
 end
+
 if not TheNet:IsDedicated() then
+	require "widgets/widgetutil"
 	GLOBAL.DoRecipeClick = function(owner, recipe, skin)
 		if recipe ~= nil and owner ~= nil and owner.replica.builder ~= nil then
 			if skin == recipe.name then
@@ -457,12 +472,7 @@ AddModRPCHandler(
 			end
 
 			if GetTime() - inst.last_craft_helper_talk > talk_cd then
-				local str = "制作" .. STRINGS.NAMES[string.upper(recipe.product)] .. "还需要"
-				for k, v in pairs(short_table) do
-					str = str .. v .. "个" .. STRINGS.NAMES[string.upper(k)]
-				end
-				-- SendModRPCToClient(CLIENT_MOD_RPC["craft_helper"]["do_craft"], str)
-				inst.craft_helper_string:set(ZipAndEncodeString(str))
+				inst.craft_helper_string:set(ZipAndEncodeString(json.encode({[recipe.product] = short_table})))
 				inst.last_craft_helper_talk = GetTime()
 			end
 		end
@@ -510,11 +520,3 @@ AddClientModRPCHandler(
 		end
 	end
 )
-
--- AddClientModRPCHandler(
--- 	"craft_helper",
--- 	"talk",
--- 	function(str)
--- 		talk_functions[talk_mode](str)
--- 	end
--- )

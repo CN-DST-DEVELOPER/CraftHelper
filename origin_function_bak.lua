@@ -1,3 +1,4 @@
+---@diagnostic disable: undefined-global, undefined-field
 -- Backup for raw function been hacked in offical files while this mod create
 -- compare this with modmain and update this mod while game updated
 -- current game version: 522521

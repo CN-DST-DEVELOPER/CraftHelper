@@ -23,6 +23,12 @@
         "ThePlayer",
         "GetStaticTime",
         "TheFocalPoint",
-        "GetModConfigData"
+        "GetModConfigData",
+        "GetTime",
+        "ZipAndEncodeString",
+        "json",
+        "DecodeAndUnzipString",
+        "AddPlayerPostInit",
+        "net_string"
     ]
 }

@@ -2,7 +2,7 @@ name = "Craft Helper"
 description =
 	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
-version = "2.0.7-hotfix2"
+version = "2.0.8"
 api_version_dst = 10
 priority = -999999
 
