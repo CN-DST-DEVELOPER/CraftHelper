@@ -2,7 +2,7 @@ name = "Craft Helper"
 description =
 	"自动从附近带有小木牌的箱子中获取制作材料，支持复杂物品自动制作材料\n\nAutomatically get materials from nearby boxes with minisign, and support the automatic compose ingredient for complex items"
 author = "Fengying"
-version = "2.0.8"
+version = "2.0.9"
 api_version_dst = 10
 priority = -999999
 
@@ -14,84 +14,6 @@ all_clients_require_mod = true
 
 mod_dependencies = {{workshop = "workshop-1595631294"}, {workshop = "workshop-2097358269"}}
 
---[[
-local keys = {
-	"A",
-	"B",
-	"C",
-	"D",
-	"E",
-	"F",
-	"G",
-	"H",
-	"I",
-	"J",
-	"K",
-	"L",
-	"M",
-	"N",
-	"O",
-	"P",
-	"Q",
-	"R",
-	"S",
-	"T",
-	"U",
-	"V",
-	"W",
-	"X",
-	"Y",
-	"Z",
-	"F1",
-	"F2",
-	"F3",
-	"F4",
-	"F5",
-	"F6",
-	"F7",
-	"F8",
-	"F9",
-	"F10",
-	"F11",
-	"F12",
-	"LAlt",
-	"RAlt",
-	"LCtrl",
-	"RCtrl",
-	"LShift",
-	"RShift",
-	"Tab",
-	"Capslock",
-	"Space",
-	"Minus",
-	"Equals",
-	"Backspace",
-	"Insert",
-	"Home",
-	"Delete",
-	"End",
-	"Pageup",
-	"Pagedown",
-	"Print",
-	"Scrollock",
-	"Pause",
-	"Period",
-	"Slash",
-	"Semicolon",
-	"Leftbracket",
-	"Rightbracket",
-	"Backslash",
-	"Up",
-	"Down",
-	"Left",
-	"Right"
-}
-local keylist = {}
-for i = 1, #keys do
-	keylist[i] = {description = keys[i], data = "KEY_" .. keys[i]}
-end
-keylist[#keylist + 1] = {description = "Disabled", data = false}
- ]]
 configuration_options = {
 	{
 		label = "检测箱子距离\nDetect chest distance",

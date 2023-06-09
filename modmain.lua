@@ -47,7 +47,7 @@ Craft_Helper.HasCraftingIngredientFromMinisignChest = function(player, item, amo
 			-- copy:Remove()
 			if
 				chest.components.smart_minisign and chest.components.smart_minisign.sign and
-					chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)]
+					chest.components.smart_minisign.sign.LX_collect_item:value() == item
 			 then
 				local enough, num_found = chest.components.container:Has(item, amount - total_num_found)
 				total_num_found = total_num_found + num_found
@@ -72,47 +72,47 @@ Craft_Helper.CanCraftIngredient = function(owner, recipe, tech_level, num)
 			end
 		}
 	)
-	for i, ing in ipairs(recipe.ingredients) do
-		local amt = math.max(1, RoundBiasedUp(ing.amount * owner.components.builder.ingredientmod)) * num
-		local _, num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, ing.type, amt)
-		local _, num_found_inv = owner.components.inventory:Has(ing.type, amt - num_found_chest, true)
-		local short = amt - num_found_chest - num_found_inv
-		if short > 0 then
-			local ing_recipe = GetValidRecipe(ing.type)
-			if
-				ing_recipe ~= nil and
-					(owner.replica.builder:KnowsRecipe(ing_recipe) or
-						(CanPrototypeRecipe(ing_recipe.level, tech_level) and owner.replica.builder:CanLearn(ing.type)))
-			 then
-				for i, v in ipairs(ing_recipe.ingredients) do
-					local ing_amt = math.max(1, RoundBiasedUp(v.amount * owner.components.builder.ingredientmod)) * short
-					local _, ing_num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, v.type, ing_amt)
-					local _, ing_num_found_inv = owner.components.inventory:Has(v.type, amt - ing_num_found_chest, true)
-					local ing_short = ing_amt - ing_num_found_chest - ing_num_found_inv
-					if ing_short > 0 then
-						local ing_can_craft, ing_short_table = Craft_Helper.CanCraftIngredient(owner, ing_recipe, tech_level, ing_short)
-						can_craft = can_craft and ing_can_craft
-						for key, value in pairs(ing_short_table) do
-							short_table[key] = short_table[key] + value
-						end
+	if
+		recipe ~= nil and
+			(owner.replica.builder:KnowsRecipe(recipe) or
+				(CanPrototypeRecipe(recipe.level, tech_level) and owner.replica.builder:CanLearn(recipe.product)))
+	 then
+		pprint(recipe.product, num)
+		for i, v in ipairs(recipe.ingredients) do
+			local ing_amt = math.max(1, RoundBiasedUp(v.amount * owner.components.builder.ingredientmod)) * num
+			local _, ing_num_found_chest = Craft_Helper.HasCraftingIngredientFromMinisignChest(owner, v.type, ing_amt)
+			local _, ing_num_found_inv = owner.components.inventory:Has(v.type, ing_amt - ing_num_found_chest, true)
+			local ing_short = ing_amt - ing_num_found_chest - ing_num_found_inv
+			pprint(v.type, ing_amt, ing_num_found_chest, ing_num_found_inv, ing_short)
+			if ing_short > 0 then
+				local ing_recipe = GetValidRecipe(v.type)
+				if ing_recipe then
+					local ing_can_craft, ing_short_table = Craft_Helper.CanCraftIngredient(owner, ing_recipe, tech_level, ing_short)
+					can_craft = can_craft and ing_can_craft
+					for key, value in pairs(ing_short_table) do
+						short_table[key] = short_table[key] + value
 					end
+				else
+					short_table[v.type] = ing_short
+					can_craft = can_craft and false
 				end
-				for i, v in ipairs(ing_recipe.character_ingredients) do
-					if not owner.components.builder:HasCharacterIngredient(v) then
-						can_craft = false
-					end
-				end
-				for i, v in ipairs(ing_recipe.tech_ingredients) do
-					if not owner.components.builder:HasTechIngredient(v) then
-						can_craft = false
-					end
-				end
-			else
-				short_table[ing.type] = short
+			end
+		end
+		for i, v in ipairs(recipe.character_ingredients) do
+			if not owner.components.builder:HasCharacterIngredient(v) then
 				can_craft = false
 			end
 		end
+		for i, v in ipairs(recipe.tech_ingredients) do
+			if not owner.components.builder:HasTechIngredient(v) then
+				can_craft = false
+			end
+		end
+	else
+		short_table[recipe.product] = num
+		can_craft = false
 	end
+
 	return can_craft, short_table
 end
 
@@ -317,7 +317,7 @@ if TheNet:GetIsServer() then
 				local total_num_found = 0
 				for i, chest in pairs(minisigh_chest) do
 					if chest:IsValid() and chest:IsNear(self.inst, distance) then
-						if chest.components.smart_minisign.sign._imagename:value() == STRINGS.NAMES[string.upper(item)] then
+						if chest.components.smart_minisign.sign.LX_collect_item:value() == item then
 							local container = chest.components.container or chest.components.inventory
 							if container then
 								for k, v in pairs(container:GetCraftingIngredient(item, amount - total_num_found, reverse_search_order)) do
